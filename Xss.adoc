@@ -1,5 +1,6 @@
 :imagesdir: php image XSS
 
+== TP 6 avant vacances février sur PortSwigger
 3.1. Q1. Différence Stored vs Reflected
 Différence de dangerosité : La faille Stored (stockée) est plus dangereuse car le script malveillant est enregistré de façon permanente sur le serveur (ex: dans une base de données). Chaque utilisateur qui visite la page est automatiquement infecté.
 
@@ -9,7 +10,8 @@ image::Capture d'écran 2026-02-19 143003.png []
 image::Capture d'écran 2026-02-19 143012.png []
 image::Capture d'écran 2026-02-19 143225.png []
 image::Capture d'écran 2026-02-19 143632.png []
-
+image::Capture d'écran 2026-03-12 143945.png []
+image::Capture d'écran 2026-02-12 143956.png []
 Méthode pour l'administrateur : La méthode Stored est la plus efficace. Elle ne nécessite pas d'envoyer un lien suspect à la cible ; il suffit que l'administrateur consulte sa console de gestion habituelle pour que le piège se déclenche.
 
 3.2. Q2. Le contexte d’attribut (Lab 3)
@@ -34,4 +36,41 @@ Exécution : Comme cette partie de l'URL n'est jamais envoyée au serveur, le WA
 3.5. Q5. Remédiation
 La règle d'or : Encoder (échapper) toutes les données affichées à l'écran.
 
+
+== TP 7 toujours XSS mais sur mutillidae au retour vacances février
+
+
 Justification : Interdire le mot "script" est inutile car il existe des dizaines d'autres balises (comme <img> ou <body>). L'encodage est la seule méthode fiable : elle transforme les caractères spéciaux (comme < en &lt;) pour que le navigateur les affiche comme du texte inoffensif au lieu de les exécuter comme du code.
+
+
+Est-ce que le niveau de sécurité 1 permet d’éviter l’attaque avec BurpSuite ?
+Non. Burp Suite intercepte les données après le navigateur, donc il contourne facilement les protections légères du niveau 1.
+
+    Est-il possible d’écrire le code malicieux directement dans le formulaire ?
+    Oui, sauf si le formulaire limite le nombre de caractères. Dans ce cas, on utilise Burp Suite pour forcer l'envoi du code complet.
+
+    En observant le code de la page dns-lookup.php, repérer les sécurités activées à ce niveau.
+    À ce niveau, il n'y a aucune sécurité réelle côté serveur. Le code PHP récupère les données et les utilise directement sans les filtrer.
+
+    Quels sont les caractères typiques utilisés lors d’une attaque XSS ?
+    Les principaux sont : < > (chevrons), " ' (guillemets), / (slash) et ( ) (parenthèses).
+
+Section 2 : Test du niveau 5 de sécurité
+
+    Est-ce que le niveau de sécurité 5 permet d’éviter l’attaque avec BurpSuite ?
+    Oui. Le serveur vérifie et nettoie les données lui-même, donc modifier la requête avec Burp Suite ne fonctionne plus.
+
+    En observant le fichier dns-lookup.php, repérer les variables spécifiques associées à ce niveau de protection.
+    Le code utilise des variables de nettoyage (souvent nommées $lTargetHostHtml) qui contiennent la version sécurisée des données saisies.
+
+    Expliquer le rôle de l’instruction à la ligne n° 44 :
+    Elle sert à l'encodage. Elle transforme les caractères spéciaux en texte inerte pour que le navigateur ne les lise pas comme du code.
+
+    Que vérifie la protection contre les injections de commandes ?
+    Elle bloque les symboles qui permettent de donner des ordres au système d'exploitation, comme ;, &, && ou |.
+
+    Quelle fonction permet d’éviter spécifiquement les attaques de type XSS ?
+    C'est la fonction PHP htmlspecialchars(). Elle neutralise les balises HTML.
+
+    Résumer les protections mises en œuvre par le niveau de protection n°5.
+    Le niveau 5 utilise une liste blanche (pour vérifier le format des données), un filtrage des caractères dangereux et l'encodage HTML systématique avant d'afficher quoi que ce soit.
