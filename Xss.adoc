@@ -12,6 +12,9 @@ image::Capture d'écran 2026-02-19 143225.png []
 image::Capture d'écran 2026-02-19 143632.png []
 image::Capture d'écran 2026-03-12 143945.png []
 image::Capture d'écran 2026-02-12 143956.png []
+/**
+* <img src="chemin/vers/Capture d'écran 2026-03-19 152502.png" alt="Exemple">
+*/
 Méthode pour l'administrateur : La méthode Stored est la plus efficace. Elle ne nécessite pas d'envoyer un lien suspect à la cible ; il suffit que l'administrateur consulte sa console de gestion habituelle pour que le piège se déclenche.
 
 3.2. Q2. Le contexte d’attribut (Lab 3)
@@ -74,3 +77,22 @@ Section 2 : Test du niveau 5 de sécurité
 
     Résumer les protections mises en œuvre par le niveau de protection n°5.
     Le niveau 5 utilise une liste blanche (pour vérifier le format des données), un filtrage des caractères dangereux et l'encodage HTML systématique avant d'afficher quoi que ce soit.
+
+
+== Séance 8 : La mécanique du CSRF (Cross-Site Request Forgery)au retour des vaccances février
+1. Architecture (Lab 1)
+Pourquoi la déconnexion bloque l'attaque ?
+L'attaque CSRF repose sur l'utilisation invisible de la session active de la victime. Si la victime se déconnecte, son cookie de session devient invalide ou est supprimé. Lorsque la page malveillante tente de soumettre le formulaire, la requête arrive au serveur sans "preuve" d'identité. Le serveur ne peut donc pas identifier le compte à modifier et rejette l'action.
+
+2. Logique applicative (Lab 2)
+Quelle était la faille ?
+Le serveur vérifiait simplement si le jeton CSRF fourni existait dans sa base de jetons valides, sans vérifier à qui il appartenait. L'attaquant a donc pu utiliser un jeton valide provenant de son propre compte pour valider une action sur le compte de la victime.
+
+Comment corriger le code ?
+Le développeur doit lier chaque jeton à l'identifiant de session de l'utilisateur spécifique. La vérification doit être :
+
+SI (jeton_reçu == jeton_stocké_dans_la_session_de_cet_utilisateur) ALORS Valider.
+
+3. Analyse de Mutillidae (Lab 3)
+Pourquoi le navigateur a-t-il envoyé le cookie ?
+C'est le comportement historique par défaut des navigateurs : lorsqu'une requête est envoyée vers un domaine (ici Mutillidae), le navigateur joint automatiquement tous les cookies qu'il possède pour ce domaine précis, même si la requête a été déclenchée depuis un site tiers ou un fichier local. Le navigateur privilégie la continuité de la connexion de l'utilisateur sur la destination, ce qui crée la vulnérabilité si l'attribut SameSite n'est pas configuré.
