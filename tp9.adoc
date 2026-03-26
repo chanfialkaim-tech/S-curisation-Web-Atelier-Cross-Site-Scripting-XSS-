@@ -1,0 +1,73 @@
+Question C.3 : Mise en œuvre de la protection CSRF1.
+Éléments de sécurisation (Stockage)Solution de protectionÉléments stockés côté ClientÉléments stockés côté ServeurSynchronizer Token Pattern (Session)Le jeton (token) dans un champ caché du formulaire HTML.
+Le jeton (token) dans la Variable de Session.Double Submit Cookie PatternLe jeton dans un Cookie ET dans un champ caché du formulaire.
+Rien (le serveur compare uniquement les deux valeurs reçues).
+
+
+Modifications des classes et des vues (Synchronizer Token)
+Dans la classe Security (app/Config/Security.php) :
+Il faut modifier la propriété $csrfProtection pour passer de 'cookie' à 'session'.
+
+PHP
+public $csrfProtection = 'session';
+Dans la classe Filters (app/Config/Filters.php) :
+Il faut activer le filtre csrf dans le tableau des filtres globaux s'exécutant avant la requête (before).
+
+PHP
+public $globals = [
+'before' => [
+'honeypot',
+'invalidchars',
+'csrf', // Ajout du filtre CSRF ici
+],
+];
+Dans les Vues (Formulaires HTML) :
+Les développeurs doivent impérativement ajouter le jeton dans chaque formulaire de type POST. La méthode la plus simple fournie par CodeIgniter est l'utilisation de l'aide suivante :
+<?= csrf_field() ?> (Ceci génère automatiquement le champ input de type hidden avec le nom et la valeur du jeton).
+
+
+Question C.4 : Gestion de l'API et Liste blanche (Whitelist)
+1. Pourquoi les routes de l'API ne répondent plus ?
+L'API de Mme Erben ne répond plus car, en activant la protection CSRF de manière globale (dans $globals), le serveur rejette désormais toutes les requêtes de type POST (ou autres méthodes sensibles) qui ne contiennent pas un jeton CSRF valide.
+
+Étant donné que les applications ou scripts externes qui consomment l'API (via /ws/...) ne sont pas conçus pour récupérer et renvoyer ce jeton spécifique à la session Web, leurs requêtes sont bloquées par le filtre de sécurité par défaut.
+
+2. Modifications de la classe Filters pour la liste blanche
+Pour autoriser les routes de l'API tout en gardant le reste du site protégé, il faut ajouter une exception (whitelist) dans la configuration du filtre csrf au sein de la classe Filters.
+
+Modification à apporter :
+PHP
+public $globals = [
+'before' => [
+'honeypot',
+'invalidchars',
+'csrf' => ['except' => ['ws/*']], // Exclut toutes les routes commençant par /ws/
+],
+];
+Note : L'utilisation du caractère joker * (ws/*) permet de couvrir l'ensemble des points d'accès définis dans le document B3, tels que /ws/animaux, /ws/hebergements et /ws/ateliers.
+
+
+Question C.3 : Sécurisation CSRF
+
+1. Ou sont stockés les trucs ?
+Voila un petit tableau pour voir ou on met les jetons (tokens) de sécurité[cite: 74, 79]:
+
+[cols="1,2,2", options="header"]
+|===
+| Méthode | Côté Client (Navigateur) | Côté Serveur
+| **Synchronizer Token** | [cite_start]Dans un **champ caché** du formulaire[cite: 75, 76]. | Dans la **SESSION** de l'utilisateur[cite: 75].
+| **Double Submit Cookie** | Dans un **cookie** ET un **champ caché**[cite: 79]. | [cite_start]**Rien du tout**, le serveur compare juste les deux[cite: 80].
+|===
+
+2. Config pour activer le "Synchronizer Token"
+Pour que ça marche sur CodeIgniter, faut changer deux fichiers[cite: 82, 83, 84]:
+
+* **Fichier `Security.php`** : On change la protection pour dire qu'on veut utiliser les sessions[cite: 84].
+[source,php]
+----
+public $csrfProtection = 'session';
+----
+
+* **Fichier `Filters.php`** : On rajoute 'csrf' dans la liste des filtres qui tournent tout le temps ("before")[cite: 82].
+[source,php]
+----
